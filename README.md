@@ -24,9 +24,12 @@ tp-fund-ia/
 │   ├── __init__.py
 │   ├── generator.py      # Geração de instâncias por caminhada aleatória
 │   ├── run.py            # Runner + exportação CSV + tabela de resumo
+│   ├── plot.py           # Gráficos matplotlib + tabelas LaTeX
 │   └── results/
 │       ├── results.csv   # Dados brutos (uma linha por instância × algoritmo)
-│       └── summary.csv   # Médias agrupadas por (dificuldade, algoritmo)
+│       ├── summary.csv   # Médias agrupadas por (dificuldade, algoritmo)
+│       ├── figures/      # PNGs gerados por plot.py
+│       └── tables/       # Tabelas .tex geradas por plot.py
 ├── tests/
 │   ├── test_state.py         # Testes da modelagem
 │   ├── test_solvability.py   # Testes de solucionabilidade e geração
@@ -375,3 +378,41 @@ Colunas: `solve` = taxa de sucesso · `nodes` = média de nós expandidos · `le
 - **A\*** domina os dois: resolve todos os casos até N = 40, expandindo **3 a 5 ordens de grandeza menos nós** que BFS (ex.: 165 vs 364 518 em N = 20) e em **tempo ~500× menor**. A heurística de Manhattan é a razão — ela descarta sistematicamente ramos distantes da solução.
 
 Os dados brutos estão em `benchmark/results/results.csv` e as médias em `benchmark/results/summary.csv`.
+
+---
+
+## Dia 7 — Análise dos resultados e geração de gráficos
+
+### Figuras geradas (`benchmark/plot.py`)
+
+O script lê os CSVs do benchmark e produz cinco figuras em `benchmark/results/figures/`:
+
+| Arquivo | Conteúdo |
+|---------|----------|
+| `nodes_vs_difficulty.png` | Nós expandidos × dificuldade (escala log) |
+| `time_vs_difficulty.png` | Tempo de execução × dificuldade (escala log) |
+| `solution_length_vs_difficulty.png` | Comprimento da solução × dificuldade (só instâncias resolvidas) |
+| `solve_rate_vs_difficulty.png` | Taxa de sucesso × dificuldade |
+| `all_metrics.png` | Grade 2×2 com todos os painéis acima |
+
+Convenção visual: marcador **sólido** = algoritmo resolveu 100% das instâncias; marcador **oco** = pelo menos uma falha no nível.
+
+### Tabelas LaTeX geradas
+
+Três arquivos em `benchmark/results/tables/`, prontos para `\input{}` no relatório:
+
+| Arquivo | Conteúdo |
+|---------|----------|
+| `tab_nodes.tex` | Média de nós expandidos; valores no teto marcados com †  |
+| `tab_time.tex` | Tempo médio de execução em segundos |
+| `tab_solution.tex` | Comprimento médio da solução + taxa de sucesso |
+
+### Figura combinada
+
+![Comparação BFS × DFS × A*](benchmark/results/figures/all_metrics.png)
+
+Os quatro painéis mostram simultaneamente:
+- **Nós expandidos** (log): A* cresce lentamente enquanto BFS e DFS batem no teto rapidamente.
+- **Tempo** (log): A* é consistentemente 2–3 ordens de grandeza mais rápido.
+- **Comprimento da solução**: BFS e A* encontram soluções ótimas (≈ N movimentos); DFS encontra caminhos muito longos quando resolve.
+- **Taxa de sucesso**: DFS falha desde N = 5; BFS colapsa em N = 20–30; A* mantém 100% até N = 40.

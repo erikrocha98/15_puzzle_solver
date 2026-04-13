@@ -1,0 +1,21 @@
+\begin{table}[htbp]
+\centering
+\caption{Comprimento médio da solução (movimentos) e taxa de sucesso por algoritmo e dificuldade. Traço indica zero instâncias resolvidas.}
+\label{tab:solution}
+\begin{tabular}{crlrlrl}
+\toprule
+$N$ & \multicolumn{2}{c}{BFS} & \multicolumn{2}{c}{DFS} & \multicolumn{2}{c}{A*} \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}\cmidrule(lr){6-7}
+ & mov. & sucesso & mov. & sucesso & mov. & sucesso \\
+\midrule
+5 & 5.0 & 100\% & 58.6 & 50\% & 5.0 & 100\% \\
+10 & 9.8 & 100\% & — & 0\% & 9.8 & 100\% \\
+15 & 13.4 & 100\% & — & 0\% & 13.4 & 100\% \\
+20 & 14.0 & 30\% & — & 0\% & 18.2 & 100\% \\
+25 & 15.0 & 10\% & — & 0\% & 21.6 & 100\% \\
+30 & — & 0\% & — & 0\% & 26.6 & 100\% \\
+40 & 18.0 & 10\% & — & 0\% & 28.4 & 100\% \\
+50 & — & 0\% & — & 0\% & 34.2 & 90\% \\
+\bottomrule
+\end{tabular}
+\end{table}
