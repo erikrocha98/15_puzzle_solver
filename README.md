@@ -2,7 +2,7 @@
 **UFMG — Departamento de Engenharia Elétrica**
 Prof. Cristiano Castro — 2026/1
 
-Implementação de agentes para resolver o **15-puzzle** (quebra-cabeça de 15 peças) utilizando diferentes algoritmos de busca.
+Este trabalho implementa e compara agentes de busca para o **15-puzzle** (quebra-cabeça de 15 peças), cobrindo desde a modelagem do estado e a análise de solucionabilidade até a implementação de três algoritmos (BFS, DFS e A*) e uma avaliação experimental comparativa entre eles.
 
 ---
 
@@ -41,7 +41,7 @@ tp-fund-ia/
 
 ---
 
-## Dia 1 — Modelagem e estrutura do projeto
+## Fase 1 — Modelagem e estrutura do projeto
 
 ### Representação do estado
 
@@ -76,12 +76,12 @@ As peças estão ordenadas de 1 a 15, com o espaço vazio na última posição.
 
 ### Geração de vizinhos
 
-A função `get_neighbors` identifica a posição do espaço vazio (linha e coluna via `divmod`), e gera até 4 vizinhos deslocando o blank nas direções válidas:
+A função `get_neighbors` identifica a posição do espaço vazio (linha e coluna via `divmod`) e gera até 4 vizinhos deslocando o espaço vazio nas direções válidas:
 
-- **Cima**: possível se `linha > 0` → troca com índice `blank - 4`
-- **Baixo**: possível se `linha < 3` → troca com índice `blank + 4`
-- **Esquerda**: possível se `coluna > 0` → troca com índice `blank - 1`
-- **Direita**: possível se `coluna < 3` → troca com índice `blank + 1`
+- **Cima**: possível se `linha > 0` → troca com índice `vazio - 4`
+- **Baixo**: possível se `linha < 3` → troca com índice `vazio + 4`
+- **Esquerda**: possível se `coluna > 0` → troca com índice `vazio - 1`
+- **Direita**: possível se `coluna < 3` → troca com índice `vazio + 1`
 
 Posições de canto geram **2 vizinhos**, bordas geram **3**, e posições internas geram **4**.
 
@@ -97,7 +97,7 @@ Todos os testes passaram com sucesso.
 
 ---
 
-## Dia 2 — Tarefa 1 (solucionabilidade) + Tarefa 2 (geração aleatória)
+## Fase 2 — Tarefa 1: Solucionabilidade e Tarefa 2: Geração Aleatória
 
 ### Tarefa 1 — Verificação de solucionabilidade (`puzzle/solvability.py`)
 
@@ -126,11 +126,11 @@ Verificação com o estado objetivo: 0 inversões + linha 1 (ímpar) → (0+1) %
 
 ### Tarefa 2 — Geração aleatória de estados (`puzzle/generator.py`)
 
-A estratégia adotada foi:
+A geração adota três etapas:
 
 1. Embaralha aleatoriamente as 16 peças com `random.shuffle`.
-2. Verifica solucionabilidade com `is_solvable`.
-3. Se insolúvel, **corrige a paridade** trocando as duas primeiras peças não-vazias — isso muda o número de inversões em 1 (inverte a paridade) sem alterar a posição do blank, tornando o estado solucionável.
+2. Verifica a solucionabilidade com `is_solvable`.
+3. Se insolúvel, **corrige a paridade** trocando as duas primeiras peças não-vazias — isso altera o número de inversões em 1 (inverte a paridade) sem deslocar o espaço vazio, tornando o estado solucionável.
 
 Essa abordagem é O(1) para a correção e evita o descarte e re-embaralhamento de estados.
 
@@ -157,7 +157,7 @@ Todos os testes passaram com sucesso.
 
 ---
 
-## Dia 3 — Tarefa 3: Busca em Largura (BFS)
+## Fase 3 — Tarefa 3: Busca em Largura (BFS)
 
 ### Algoritmo (`puzzle/search/bfs.py`)
 
@@ -201,10 +201,10 @@ result = bfs(initial_state)
 
 ### Limitações do BFS no 15-puzzle
 
-BFS é **completo** e **ótimo**, mas sua complexidade de tempo e espaço é
-exponencial em função da profundidade da solução. Para o 15-puzzle, soluções
-com mais de ~20 movimentos tornam o consumo de memória impraticável. Por isso,
-os testes cobrem apenas configurações fáceis (poucos movimentos do objetivo).
+Apesar de ser **completo** e **ótimo**, o BFS tem complexidade de tempo e espaço
+exponencial em função da profundidade da solução. No 15-puzzle, soluções com
+mais de ~20 movimentos tornam o consumo de memória impraticável. Por esse motivo,
+os testes cobrem apenas configurações com poucos movimentos a partir do objetivo.
 
 ### Testes realizados (`tests/test_bfs.py`)
 
@@ -218,7 +218,7 @@ Todos os testes passaram com sucesso.
 
 ---
 
-## Dia 4 — Tarefa 3: Busca em Profundidade (DFS)
+## Fase 4 — Tarefa 3: Busca em Profundidade (DFS)
 
 
 ### Algoritmo (`puzzle/search/dfs.py`)
@@ -243,7 +243,9 @@ Dois limites controlam a busca:
 O retorno segue o mesmo contrato do BFS (`solution`, `nodes_expanded`,
 `solution_length`, `elapsed_time`), facilitando a comparação entre os algoritmos.
 
-### Diferenças em relação ao BFS
+### Comparação com BFS
+
+A tabela a seguir resume as principais diferenças teóricas e práticas entre os dois algoritmos para o 15-puzzle:
 
 | Propriedade | BFS | DFS |
 |-------------|-----|-----|
@@ -254,10 +256,10 @@ O retorno segue o mesmo contrato do BFS (`solution`, `nodes_expanded`,
 
 ### Limitação observada no 15-puzzle
 
-DFS é impraticável para o 15-puzzle mesmo para estados a poucos movimentos
-do objetivo. Por explorar primeiro ramos de profundidade 50, o algoritmo
-esgota `max_nodes` antes de encontrar a solução ótima. Esse comportamento
-foi documentado em `test_15_impractical_for_deeper_states`.
+O DFS é impraticável para o 15-puzzle mesmo em estados a poucos movimentos
+do objetivo. Por explorar preferencialmente ramos de profundidade 50, o algoritmo
+esgota `max_nodes` antes de encontrar qualquer solução. Esse comportamento
+foi documentado no teste `test_15_impractical_for_deeper_states`.
 
 ### Testes realizados (`tests/test_dfs.py`)
 
@@ -271,7 +273,7 @@ Todos os testes passaram com sucesso.
 
 ---
 
-## Dia 5 — Tarefa 4: Busca A* (`puzzle/search/astar.py`)
+## Fase 5 — Tarefa 4: Busca A* (`puzzle/search/astar.py`)
 
 ### Função de custo e heurística
 
@@ -313,7 +315,7 @@ result = astar(initial_state)
 
 ### Vantagem sobre BFS e DFS
 
-A heurística guia a busca diretamente para a solução, expandindo uma fração ínfima dos nós que BFS precisaria. Exemplo com instância a 20 movimentos do objetivo:
+A heurística de Manhattan guia a busca em direção à solução, descartando sistematicamente ramos distantes do objetivo e expandindo uma fração ínfima dos nós que BFS precisaria explorar. O contraste é ilustrado na tabela abaixo, com uma instância a 20 movimentos do objetivo:
 
 | Algoritmo | Nós expandidos | Resultado |
 |-----------|---------------|-----------|
@@ -332,12 +334,12 @@ Todos os testes passaram com sucesso.
 
 ---
 
-## Dia 6 — Tarefa 5: Benchmark e comparação
+## Fase 6 — Tarefa 5: Benchmark e Comparação
 
 ### Metodologia
 
 **Geração de instâncias de dificuldade controlada** (`benchmark/generator.py`):
-aplica N movimentos aleatórios a partir do estado objetivo (caminhada aleatória sem reversão imediata do último passo), com N ∈ {5, 10, 15, 20, 25, 30, 40, 50}. 10 instâncias por nível, sementes fixas para reprodutibilidade.
+cada instância é produzida aplicando N movimentos aleatórios a partir do estado objetivo — caminhada aleatória sem reversão imediata do passo anterior —, com N ∈ {5, 10, 15, 20, 25, 30, 40, 50}. São geradas 10 instâncias por nível, com sementes fixas para garantir reprodutibilidade.
 
 **Configurações do runner** (`benchmark/run.py`):
 
@@ -350,7 +352,7 @@ aplica N movimentos aleatórios a partir do estado objetivo (caminhada aleatóri
 
 ### Resultados (10 instâncias por nível)
 
-Colunas: `solve` = taxa de sucesso · `nodes` = média de nós expandidos · `len` = média de movimentos (só resolvidas) · `t` = tempo médio em segundos.
+Legenda das colunas: `solve` = taxa de sucesso; `nodes` = média de nós expandidos; `len` = comprimento médio da solução (somente instâncias resolvidas); `t` = tempo médio de execução em segundos.
 
 |  N  | BFS solve | BFS nodes | BFS len | BFS t(s) | DFS solve | DFS nodes | DFS len | DFS t(s) | A* solve | A* nodes | A* len | A* t(s) |
 |-----|-----------|-----------|---------|----------|-----------|-----------|---------|----------|----------|----------|--------|---------|
@@ -373,19 +375,19 @@ Colunas: `solve` = taxa de sucesso · `nodes` = média de nós expandidos · `le
 
 ### Conclusões
 
-- **DFS** é impraticável para o 15-puzzle: mesmo em instâncias a apenas 5 movimentos do objetivo, já falha em 50% dos casos. O espaço de busca profundo e sem guia heurístico o leva a explorar ramos irrelevantes até o limite.
-- **BFS** é ótimo e completo para casos fáceis (N ≤ 15), mas o crescimento exponencial de memória o inviabiliza a partir de ~20 movimentos.
-- **A\*** domina os dois: resolve todos os casos até N = 40, expandindo **3 a 5 ordens de grandeza menos nós** que BFS (ex.: 165 vs 364 518 em N = 20) e em **tempo ~500× menor**. A heurística de Manhattan é a razão — ela descarta sistematicamente ramos distantes da solução.
+- **DFS** é impraticável para o 15-puzzle: mesmo em instâncias a apenas 5 movimentos do objetivo, já falha em 50% dos casos. Sem guia heurístico, o algoritmo percorre ramos profundos e irrelevantes até atingir o limite de nós.
+- **BFS** é ótimo e completo para instâncias fáceis (N ≤ 15), mas o crescimento exponencial de memória o inviabiliza a partir de ~20 movimentos.
+- **A\*** supera os dois: resolve todos os casos até N = 40, expandindo **3 a 5 ordens de grandeza menos nós** que o BFS (ex.: 165 vs. 364 518 em N = 20) e com **tempo ~500× menor**. O diferencial é a heurística de Manhattan, que descarta sistematicamente ramos distantes da solução.
 
 Os dados brutos estão em `benchmark/results/results.csv` e as médias em `benchmark/results/summary.csv`.
 
 ---
 
-## Dia 7 — Análise dos resultados e geração de gráficos
+## Fase 7 — Análise dos Resultados e Geração de Gráficos
 
 ### Figuras geradas (`benchmark/plot.py`)
 
-O script lê os CSVs do benchmark e produz cinco figuras em `benchmark/results/figures/`:
+O script lê os arquivos CSV gerados pelo benchmark e produz cinco figuras em `benchmark/results/figures/`:
 
 | Arquivo | Conteúdo |
 |---------|----------|
