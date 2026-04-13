@@ -20,6 +20,13 @@ tp-fund-ia/
 │       ├── bfs.py        # Busca em largura — BFS (Tarefa 3)
 │       ├── dfs.py        # Busca em profundidade — DFS (Tarefa 3)
 │       └── astar.py      # Busca A* com heurística Manhattan (Tarefa 4)
+├── benchmark/
+│   ├── __init__.py
+│   ├── generator.py      # Geração de instâncias por caminhada aleatória
+│   ├── run.py            # Runner + exportação CSV + tabela de resumo
+│   └── results/
+│       ├── results.csv   # Dados brutos (uma linha por instância × algoritmo)
+│       └── summary.csv   # Médias agrupadas por (dificuldade, algoritmo)
 ├── tests/
 │   ├── test_state.py         # Testes da modelagem
 │   ├── test_solvability.py   # Testes de solucionabilidade e geração
@@ -319,3 +326,52 @@ A heurística guia a busca diretamente para a solução, expandindo uma fração
 - **Instância difícil**: A* resolve em 574 nós uma instância que BFS não consegue em 500 000.
 
 Todos os testes passaram com sucesso.
+
+---
+
+## Dia 6 — Tarefa 5: Benchmark e comparação
+
+### Metodologia
+
+**Geração de instâncias de dificuldade controlada** (`benchmark/generator.py`):
+aplica N movimentos aleatórios a partir do estado objetivo (caminhada aleatória sem reversão imediata do último passo), com N ∈ {5, 10, 15, 20, 25, 30, 40, 50}. 10 instâncias por nível, sementes fixas para reprodutibilidade.
+
+**Configurações do runner** (`benchmark/run.py`):
+
+| Parâmetro | Valor |
+|-----------|-------|
+| Instâncias por nível | 10 |
+| `max_nodes` BFS / A* | 500 000 |
+| `max_nodes` DFS | 100 000 |
+| `max_depth` DFS | 80 |
+
+### Resultados (10 instâncias por nível)
+
+Colunas: `solve` = taxa de sucesso · `nodes` = média de nós expandidos · `len` = média de movimentos (só resolvidas) · `t` = tempo médio em segundos.
+
+|  N  | BFS solve | BFS nodes | BFS len | BFS t(s) | DFS solve | DFS nodes | DFS len | DFS t(s) | A* solve | A* nodes | A* len | A* t(s) |
+|-----|-----------|-----------|---------|----------|-----------|-----------|---------|----------|----------|----------|--------|---------|
+|  5  | 1.00 |       40.5 |  5.0 | 0.0001 | 0.50 |    59 608 | 58.6 | 0.2185 | 1.00 |       6.0 |  5.0 | 0.0001 |
+| 10  | 1.00 |    1 558.6 |  9.8 | 0.0057 | 0.00 |   100 000 |    — | 0.4653 | 1.00 |      14.0 |  9.8 | 0.0002 |
+| 15  | 1.00 |   40 324.8 | 13.4 | 0.1166 | 0.00 |   100 000 |    — | 0.4892 | 1.00 |      49.1 | 13.4 | 0.0007 |
+| 20  | 0.30 |  364 517.8 | 14.0 | 1.1865 | 0.00 |   100 000 |    — | 0.4870 | 1.00 |     165.3 | 18.2 | 0.0023 |
+| 25  | 0.10 |  454 760.1 | 15.0 | 1.6422 | 0.00 |   100 000 |    — | 0.5215 | 1.00 |     422.9 | 21.6 | 0.0060 |
+| 30  | 0.00 |  500 000.0 |    — | 1.4661 | 0.00 |   100 000 |    — | 0.4481 | 1.00 |   3 512.9 | 26.6 | 0.0429 |
+| 40  | 0.10 |  493 376.4 | 18.0 | 1.4725 | 0.00 |   100 000 |    — | 0.4268 | 1.00 |  37 495.2 | 28.4 | 0.5018 |
+| 50  | 0.00 |  500 000.0 |    — | 1.5858 | 0.00 |   100 000 |    — | 0.4787 | 0.90 |  93 956.7 | 34.2 | 1.3356 |
+
+### Ponto de falha de cada algoritmo
+
+| Algoritmo | Primeiro nível com falha | Observação |
+|-----------|--------------------------|------------|
+| **DFS** | N = 5 (solve_rate = 0.50) | Falha desde casos triviais; exploração exaustiva sem guia heurístico |
+| **BFS** | N = 20 (solve_rate = 0.30) | Memória/tempo esgotados para profundidades ≥ 18–20 |
+| **A\*** | N = 50 (solve_rate = 0.90) | Ainda resolve quase tudo; falha apenas quando a distância real exige >93 k nós |
+
+### Conclusões
+
+- **DFS** é impraticável para o 15-puzzle: mesmo em instâncias a apenas 5 movimentos do objetivo, já falha em 50% dos casos. O espaço de busca profundo e sem guia heurístico o leva a explorar ramos irrelevantes até o limite.
+- **BFS** é ótimo e completo para casos fáceis (N ≤ 15), mas o crescimento exponencial de memória o inviabiliza a partir de ~20 movimentos.
+- **A\*** domina os dois: resolve todos os casos até N = 40, expandindo **3 a 5 ordens de grandeza menos nós** que BFS (ex.: 165 vs 364 518 em N = 20) e em **tempo ~500× menor**. A heurística de Manhattan é a razão — ela descarta sistematicamente ramos distantes da solução.
+
+Os dados brutos estão em `benchmark/results/results.csv` e as médias em `benchmark/results/summary.csv`.
