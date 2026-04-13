@@ -18,12 +18,14 @@ tp-fund-ia/
 │   └── search/
 │       ├── __init__.py
 │       ├── bfs.py        # Busca em largura — BFS (Tarefa 3)
-│       └── dfs.py        # Busca em profundidade — DFS (Tarefa 3)
+│       ├── dfs.py        # Busca em profundidade — DFS (Tarefa 3)
+│       └── astar.py      # Busca A* com heurística Manhattan (Tarefa 4)
 ├── tests/
 │   ├── test_state.py         # Testes da modelagem
 │   ├── test_solvability.py   # Testes de solucionabilidade e geração
 │   ├── test_bfs.py           # Testes de BFS (8-puzzle e 15-puzzle)
-│   └── test_dfs.py           # Testes de DFS (8-puzzle e 15-puzzle)
+│   ├── test_dfs.py           # Testes de DFS (8-puzzle e 15-puzzle)
+│   └── test_astar.py         # Testes de A* e heurística Manhattan
 └── README.md
 ```
 
@@ -208,6 +210,7 @@ Todos os testes passaram com sucesso.
 
 ## Dia 4 — Tarefa 3: Busca em Profundidade (DFS)
 
+
 ### Algoritmo (`puzzle/search/dfs.py`)
 
 DFS explora o grafo de estados descendo o mais fundo possível em cada ramo
@@ -253,5 +256,66 @@ foi documentado em `test_15_impractical_for_deeper_states`.
   profundidade e de nós funcionando corretamente.
 - **15-puzzle (4×4)**: estados a 1 e 2 movimentos do objetivo; caminho
   conectado; teste documentando a impraticabilidade para estados mais distantes.
+
+Todos os testes passaram com sucesso.
+
+---
+
+## Dia 5 — Tarefa 4: Busca A* (`puzzle/search/astar.py`)
+
+### Função de custo e heurística
+
+| Função | Definição |
+|--------|-----------|
+| `g(n)` | Profundidade do nó — número de movimentos desde o estado inicial |
+| `h(n)` | Distância de Manhattan — para cada peça (exceto o blank), soma `\|linha_atual − linha_obj\|` + `\|col_atual − col_obj\|` |
+| `f(n)` | `g(n) + h(n)` — prioridade na fila |
+
+A heurística de Manhattan é **admissível** (nunca superestima o custo real) e **consistente**, garantindo que A* encontre sempre a solução ótima.
+
+### Algoritmo (`puzzle/search/astar.py`)
+
+Estruturas utilizadas:
+- `heapq` como fila de prioridade mínima. Cada entrada é `(f, g, counter, state)`.
+  O campo `counter` desempata quando `f` e `g` são iguais, evitando a comparação direta de tuplas de estado.
+- `g_score[state]` — menor custo conhecido até cada estado, usado para descartar entradas desatualizadas do heap (*lazy deletion*).
+- `parent[state]` — estado predecessor no caminho ótimo, para reconstrução da solução.
+
+O retorno segue o mesmo contrato de BFS e DFS:
+
+| Campo | Descrição |
+|-------|-----------|
+| `solution` | Lista de estados do inicial ao objetivo, ou `None` |
+| `nodes_expanded` | Número de nós expandidos |
+| `solution_length` | Número de movimentos até a solução, ou `None` |
+| `elapsed_time` | Tempo de execução em segundos |
+
+```python
+from puzzle.search.astar import astar, manhattan_distance
+from puzzle.state import GOAL_STATE
+
+result = astar(initial_state)
+# result['solution']        → lista de estados
+# result['nodes_expanded']  → int
+# result['solution_length'] → int
+# result['elapsed_time']    → float
+```
+
+### Vantagem sobre BFS e DFS
+
+A heurística guia a busca diretamente para a solução, expandindo uma fração ínfima dos nós que BFS precisaria. Exemplo com instância a 20 movimentos do objetivo:
+
+| Algoritmo | Nós expandidos | Resultado |
+|-----------|---------------|-----------|
+| BFS | 500 000 | falhou |
+| DFS | 500 000 | falhou |
+| **A\*** | **574** | **20 movimentos (ótimo)** |
+
+### Testes realizados (`tests/test_astar.py`)
+
+- **Heurística**: valor zero no estado objetivo; valor correto a 1 movimento; admissibilidade verificada contra BFS em 20 instâncias aleatórias.
+- **8-puzzle (3×3)**: estados a 0, 1, 2 e 4 movimentos; caminho conectado; limite de nós; otimalidade idêntica ao BFS; A* expande menos nós que BFS.
+- **15-puzzle (4×4)**: estados a 1 e 5 movimentos; caminho conectado; otimalidade idêntica ao BFS.
+- **Instância difícil**: A* resolve em 574 nós uma instância que BFS não consegue em 500 000.
 
 Todos os testes passaram com sucesso.
